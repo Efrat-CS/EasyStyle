@@ -161,7 +161,7 @@ def fetch_asos_products(cat_id, offset=0):
             "store": "ROW",
             "offset": str(offset),
             "categoryId": cat_id,
-            "limit": "200",         # הגדלנו את הכמות
+            "limit": "48",         # הגדלנו את הכמות
             "country": "IL",
             "currency": "ILS",
             "lang": "en-GB",

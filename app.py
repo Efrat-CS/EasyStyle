@@ -6,10 +6,10 @@ import streamlit as st
 import os
 import json
 import urllib3
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-load_dotenv()
+#load_dotenv()
 
 FAVORITES_FILE = "favorites.json"
 PROFILE_FILE = "user_profile.json"
