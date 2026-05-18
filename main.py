@@ -6,16 +6,16 @@ import json
 import os
 import requests
 import urllib3
-from dotenv import load_dotenv
+import streamlit as st
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-load_dotenv()
 
-API_KEY = os.getenv("RAPIDAPI_KEY")
 
-ASOS_HOST = os.getenv("ASOS_HOST", "asos2.p.rapidapi.com")
-SHEIN_HOST = os.getenv("SHEIN_HOST", "shein-data-api.p.rapidapi.com")
-HM_HOST = os.getenv("HM_HOST", "apidojo-hm-hennes-mauritz-v1.p.rapidapi.com")
+API_KEY = st.secrets["RAPIDAPI_KEY"]
+
+ASOS_HOST = st.secrets.get("ASOS_HOST", "asos2.p.rapidapi.com")
+SHEIN_HOST = st.secrets.get("SHEIN_HOST", "shein-data-api.p.rapidapi.com")
+HM_HOST = st.secrets.get("HM_HOST", "apidojo-hm-hennes-mauritz-v1.p.rapidapi.com")
 
 PROFILE_FILE = "user_profile.json"
 # =========================
