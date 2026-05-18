@@ -1,250 +1,350 @@
+# =========================
+# main.py (PRODUCTION VERSION)
+# =========================
+
 import json
 import os
 import requests
 import urllib3
 from dotenv import load_dotenv
 
-# ביטול הודעות אזהרה על חיבור
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 load_dotenv()
-API_KEY = os.getenv("RAPIDAPI_KEY")
-PROFILE_FILE = "user_profile.json"
 
-# --- מילון הקטגוריות של ASOS ---
+API_KEY = os.getenv("RAPIDAPI_KEY")
+
+ASOS_HOST = os.getenv("ASOS_HOST", "asos2.p.rapidapi.com")
+SHEIN_HOST = os.getenv("SHEIN_HOST", "shein-data-api.p.rapidapi.com")
+HM_HOST = os.getenv("HM_HOST", "apidojo-hm-hennes-mauritz-v1.p.rapidapi.com")
+
+PROFILE_FILE = "user_profile.json"
+# =========================
+# ASOS CATEGORIES
+# =========================
 ASOS_CATEGORIES = {
-    "1": {"name": "Dresses", "id": "8799"},
-    "2": {"name": "Tops/Shirts", "id": "4169"},
-    "3": {"name": "Skirts", "id": "2639"},
-    "4": {"name": "Shoes", "id": "4172"}
+    "1": {"name": "Dresses", "id": "8799", "gender": "Female"},
+    "2": {"name": "Tops/Shirts (Women)", "id": "4169", "gender": "Female"},
+    "3": {"name": "Skirts", "id": "2639", "gender": "Female"},
+    "4": {"name": "Women's Trousers", "id": "2640", "gender": "Female"},
+    "5": {"name": "Women's Shoes", "id": "4172", "gender": "Female"},
+    "6": {"name": "Men's Trousers", "id": "4208", "gender": "Male"},
+    "7": {"name": "Men's Shirts", "id": "3602", "gender": "Male"},
+    "8": {"name": "Men's T-shirts", "id": "7616", "gender": "Male"},
+    "9": {"name": "Men's Shoes", "id": "4209", "gender": "Male"}
 }
 
-def create_user_profile():
-    print("--- Welcome to EasyStyle: ASOS Edition ---")
-    
-    def get_input(prompt):
-        while True:
-            val = input(prompt).strip()
-            if val: 
-                return val
-            print("❌ This field cannot be empty. Please try again.")
+# =========================
+# SESSION (performance boost)
+# =========================
+session = requests.Session()
 
-    def get_valid_list_input(prompt, valid_options):
-        while True:
-            val = get_input(prompt).lower()
-            items = [i.strip() for i in val.split(',')]
-            if all(item in valid_options for item in items):
-                return items
-            else:
-                print(f"❌ Please choose ONLY from: {', '.join(valid_options)}")
 
-    name = get_input("Enter your name: ")
-    
-    valid_genders = ['male', 'female', 'other']
-    while True:
-        gender = get_input("Gender (Male/Female/Other): ").lower()
-        if gender in valid_genders:
-            break
-        print("❌ Please enter Male, Female, or Other.")
-    
-    while True:
-        height_input = get_input("Enter your height in cm: ")
-        try:
-            height = int(height_input)
-            if 50 <= height <= 250:
-                break
-            print("❌ Please enter a realistic height (50-250 cm).")
-        except ValueError:
-            print("❌ Invalid input! Please enter a valid number.")
-    
-    valid_tops = ['xs', 's', 'm', 'l', 'xl']
-    while True:
-        top_size = get_input("Your top size (XS, S, M, L, XL): ").lower()
-        if top_size in valid_tops:
-            top_size = top_size.upper()
-            break
-        print(f"❌ Invalid size! Please choose from: {', '.join(valid_tops).upper()}")
-    
-    while True:
-        bottom_input = get_input("Your bottom size (e.g., 32-50): ")
-        try:
-            bottom_size = int(bottom_input)
-            if 32 <= bottom_size <= 50:
-                break
-            print("❌ Please enter a realistic bottom size (32-50).")
-        except ValueError:
-            print("❌ Invalid input! Please enter numbers only.")
-
-    while True:
-        shoe_input = get_input("Your shoe size (e.g., 34-46): ")
-        try:
-            shoe_size = int(shoe_input)
-            if 34 <= shoe_size <= 46:
-                break
-            print("❌ Please enter a realistic shoe size (34-46).")
-        except ValueError:
-            print("❌ Invalid input! Please enter numbers only.")
-    
-    sleeve_length = get_valid_list_input(
-        "Preferred sleeve lengths (sleeveless, short, elbow, 3/4, long, extra_long): ", 
-        ['sleeveless', 'short', 'elbow', '3/4', 'long', 'extra_long']
-    )
-    
-    skirt_length = get_valid_list_input(
-        "Preferred skirt lengths (micro, mini, knee, midi, tea, maxi, floor): ", 
-        ['micro', 'mini', 'knee', 'midi', 'tea', 'maxi', 'floor']
-    )
-    
-    fit_style = get_valid_list_input(
-        "Preferred fits (skinny, slim, regular, relaxed, oversized, loose, flare, straight): ", 
-        ['skinny', 'slim', 'regular', 'relaxed', 'oversized', 'loose', 'flare', 'straight']
-    )
-    
-    colors_input = get_input("Enter favorite colors (comma separated): ")
-    favorite_colors = [c.strip() for c in colors_input.split(',')]
-    
-    style_input = get_input("Enter style preferences (e.g., modest, leather): ")
-    preferences = [s.strip() for s in style_input.split(',')]
-
-    profile = {
-        "name": name,
-        "gender": gender.capitalize(),
-        "height_cm": height, 
-        "top_size": top_size,
-        "bottom_size": bottom_size,
-        "shoe_size": shoe_size,
-        "sleeve_length": sleeve_length,
-        "skirt_length": skirt_length,
-        "fit_style": fit_style,
-        "favorite_colors": favorite_colors,
-        "preferences": preferences
-    }
-    return profile
-
-def save_profile(profile):
-    with open(PROFILE_FILE, 'w') as f:
-        json.dump(profile, f, indent=4)
-    print(f"\n[System]: Profile saved successfully!")
-
+# =========================
+# PROFILE
+# =========================
 def load_profile():
     if os.path.exists(PROFILE_FILE):
-        with open(PROFILE_FILE, 'r') as f:
+        with open(PROFILE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return None
 
-def fetch_asos_products(user_prefs, category_data):
-    cat_name = category_data["name"]
-    cat_id = category_data["id"]
+
+def save_profile(profile):
+    with open(PROFILE_FILE, "w", encoding="utf-8") as f:
+        json.dump(profile, f, indent=4, ensure_ascii=False)
+
+
+# =========================
+# SMART QUERY 
+# =========================
+def build_smart_query(cat_name, user_prefs):
+    clean_cat = cat_name.replace("Dresses", "dress").replace("Skirts", "skirt").replace("Shirts", "shirt").replace("Tops", "top").replace("Trousers", "pants").lower()
     
-    print(f"\n[System]: Analyzing ASOS {cat_name} for {user_prefs['name']}...")
-    url = "https://asos2.p.rapidapi.com/products/v2/list"
+    parts = []
     
-    synonyms = {
-        "maxi": ["maxi", "long", "floor length", "full length"],
-        "midi": ["midi", "midaxi", "tea dress", "mid"],
-        "long": ["long sleeve", "longline", "sleeved"],
-        "3/4": ["3/4", "three quarter", "elbow length"]
-    }
+    # 1. צבע (תמיד טוב להוסיף)
+    colors = user_prefs.get("favorite_colors", [])
+    if colors:
+        parts.append(colors[0])
 
-    # הגדרות ROW לשקלים, דילוג 200, מהזול ליקר - כמו שעבד לך מושלם!
-    querystring = {
-        "store": "ROW",      
-        "offset": "200",      
-        "categoryId": cat_id, 
-        "limit": "48", 
-        "country": "IL",     
-        "sort": "priceasc",   
-        "currency": "ILS",   
-        "sizeSchema": "UK",  
-        "lang": "en-GB"      
-    }
+    skirts = user_prefs.get("skirt_length", [])
+    sleeves = user_prefs.get("sleeve_length", [])
 
-    headers = {"x-rapidapi-key": API_KEY, "x-rapidapi-host": "asos2.p.rapidapi.com"}
+    # 2. הפיצול שלך: חצאיות/שמלות מקבלות רק פילטר אורך תחתון
+    if "dress" in clean_cat or "skirt" in clean_cat:
+        if skirts:
+            parts.append(skirts[0])
+        parts.append(clean_cat)
 
-    try:
-        response = requests.get(url, headers=headers, params=querystring, verify=False, timeout=20)
-        if response.status_code == 200:
-            data = response.json()
-            products = data.get("products", []) if isinstance(data, dict) else data
-            
-            print(f"--- Scanning {len(products)} {cat_name}. Filtering for your Style DNA... ---\n")
-            found_count = 0
-            
-            for item in products:
-                if not isinstance(item, dict): continue
-                name = item.get('name', '').lower()
-                
-                # --- בדיקות התאמה ---
-                match_skirt = False
-                for length in user_prefs['skirt_length']:
-                    check_list = synonyms.get(length, [length])
-                    if any(word in name for word in check_list):
-                        match_skirt = True
-                
-                match_sleeve = False
-                for sleeve in user_prefs['sleeve_length']:
-                    check_list = synonyms.get(sleeve, [sleeve])
-                    if any(word in name for word in check_list):
-                        match_sleeve = True
-
-                is_short = "mini" in name or "short" in name
-                if any(l in ["mini", "micro"] for l in user_prefs['skirt_length']):
-                    is_short = False
-
-                is_match = False
-                
-                # --- לוגיקה מותאמת קטגוריה ---
-                if cat_name == "Dresses":
-                    if (match_skirt or match_sleeve) and not is_short: 
-                        is_match = True
-                elif cat_name == "Tops/Shirts":
-                    if match_sleeve and not is_short: 
-                        is_match = True
-                elif cat_name == "Skirts":
-                    if match_skirt and not is_short: 
-                        is_match = True
-                elif cat_name == "Shoes":
-                    is_match = True # אין צנזורה על נעליים
-
-                if is_match:
-                    found_count += 1
-                    price = item.get('price', {}).get('current', {}).get('text', 'N/A')
-                    product_id = item.get('id') 
-                    star = "⭐ " if any(c.lower() in name for c in user_prefs['favorite_colors']) else "   "
-                    
-                    print(f"{star}👗 {item.get('name')}")
-                    print(f"   💰 Price: {price}")
-                    print(f"   🔗 Link: https://www.asos.com/prd/{product_id}\n")
-            
-            if found_count == 0:
-                print(f"😔 No matches in this batch of {cat_name}.")
-            else:
-                print(f"✅ Found {found_count} matches!")
-        else:
-            print(f"⚠️ API Error: {response.status_code}")
-    except Exception as e:
-        print(f"❌ Error: {e}")
-
-def main():
-    user_data = load_profile()
-    if not user_data:
-        user_data = create_user_profile()
-        save_profile(user_data)
-    
-    print(f"\n--- Welcome back, {user_data['name']}! ---")
-    
-    print("\nWhat are we shopping for today?")
-    for key, value in ASOS_CATEGORIES.items():
-        print(f"[{key}] {value['name']}")
+    # 3. הפיצול שלך: חולצות מקבלות רק פילטר שרוולים
+    elif "top" in clean_cat or "shirt" in clean_cat:
+        if sleeves:
+            s = sleeves[0]
+            if s == "long": parts.append("long sleeve")
+            elif s == "short": parts.append("short sleeve")
+            elif s == "3/4": parts.append("3/4 sleeve")
+        parts.append(clean_cat)
         
-    choice = input("\nEnter category number (1-4): ").strip()
-    
-    if choice in ASOS_CATEGORIES:
-        fetch_asos_products(user_data, ASOS_CATEGORIES[choice])
+    # 4. כל שאר הדברים (מכנסיים, נעליים)
     else:
-        print("❌ Invalid choice. Please run the script again.")
+        parts.append(clean_cat)
+
+    return " ".join(parts).strip()
+
+
+# =========================
+# SAFE REQUEST WRAPPER
+# =========================
+def safe_get(url, headers, params):
+    try:
+        res = session.get(
+            url,
+            headers=headers,
+            params=params,
+            verify=False,
+            timeout=45
+        )
+
+        if res.status_code != 200:
+            api_name = url.split("/")[2]
+            print(f"❌ חסימה מ-{api_name}! סטטוס: {res.status_code}. חסר לך Subscribe ב-RapidAPI.")
+            return None
+
+        return res.json()
+
+    except Exception as e:
+        print(f"❌ שגיאה: {e}")
+        return None
+
+
+# =========================
+# PRICE NORMALIZER & CONVERTER
+# =========================
+def convert_to_ils(price_str):
+    if not price_str or price_str == "N/A": return "N/A"
+    clean_price = "".join(filter(lambda x: x.isdigit() or x == '.', str(price_str)))
+    try:
+        val = float(clean_price)
+        if "£" in price_str: return f"₪{round(val * 4.7)}"
+        if "$" in price_str: return f"₪{round(val * 3.7)}"
+        if "€" in price_str: return f"₪{round(val * 4.0)}"
+        return f"₪{round(val)}"
+    except:
+        return price_str
+
+def normalize_price(raw):
+    try:
+        if isinstance(raw, dict):
+            text = (
+                raw.get("current", {}).get("text")
+                or raw.get("text")
+                or raw.get("value")
+            )
+            return convert_to_ils(text) if text else "N/A"
+        return convert_to_ils(raw) if raw else "N/A"
+    except:
+        return "N/A"
+
+
+# =========================
+# ASOS
+# =========================
+def fetch_asos_products(cat_id, offset=0):
+    url = f"https://{ASOS_HOST}/products/v2/list"
+    data = safe_get(
+        url,
+        {
+            "x-rapidapi-key": API_KEY,
+            "x-rapidapi-host": ASOS_HOST,
+        },
+        {
+            "store": "ROW",
+            "offset": str(offset),
+            "categoryId": cat_id,
+            "limit": "200",         # הגדלנו את הכמות
+            "country": "IL",
+            "currency": "ILS",
+            "lang": "en-GB",
+            "sort": "price_asc"
+        }
+    )
+    if not data: return []
+    products = data.get("products", [])
+    if not isinstance(products, list): return []
+
+    out = []
+    for p in products:
+        img = p.get("imageUrl", "")
+        if img.startswith("//"): img = "https:" + img
+        out.append({
+            "id": f"asos_{p.get('id')}",
+            "name": p.get("name", "Unknown"),
+            "price": {"current": {"text": normalize_price(p.get("price"))}},
+            "imageUrl": img,
+            "store": "ASOS"
+        })
+    return out
+
+
+# =========================
+# SHEIN
+# =========================
+def fetch_shein_products(query, page=1):
+
+    data = safe_get(
+        f"https://{SHEIN_HOST}/products/search",
+        {
+            "x-rapidapi-key": API_KEY,
+            "x-rapidapi-host": SHEIN_HOST,
+        },
+        {
+            "keyword": query,
+            "page": str(page),
+            "limit": "20",
+        }
+    )
+
+    if not data:
+        return []
+
+    products = (
+        data.get("products")
+        or data.get("data", {}).get("products")
+        or data.get("results")
+    )
+
+    if not isinstance(products, list):
+        return []
+
+    return _normalize(products, "shein")
+
+
+# =========================
+# H&M
+# =========================
+def fetch_hm_products(query, page=1):
+
+    data = safe_get(
+        f"https://{HM_HOST}/products/list",
+        {
+            "x-rapidapi-key": API_KEY,
+            "x-rapidapi-host": HM_HOST,
+        },
+        {
+            "country": "us",
+            "lang": "en",
+            "currentpage": str(page),
+            "pagesize": "30",
+            "query": query,
+        }
+    )
+
+    if not data:
+        return []
+
+    products = (
+        data.get("products")
+        or data.get("data", {}).get("products")
+        or data.get("results")
+    )
+
+    if not isinstance(products, list):
+        return []
+
+    return _normalize(products, "hm")
+
+
+# =========================
+# NORMALIZER (UNIFIED FORMAT)
+# =========================
+def _normalize(products, store):
+
+    out = []
+
+    for p in products:
+
+        if not isinstance(p, dict):
+            continue
+
+        price = normalize_price(p.get("price"))
+
+        out.append({
+            "id": f"{store}_{p.get('id', 'x')}",
+            "name": p.get("name") or p.get("title") or "Unknown",
+            "price": {
+                "current": {
+                    "text": price
+                }
+            },
+            "imageUrl": p.get("imageUrl") or p.get("image") or "",
+            "store": store.upper()
+        })
+
+    return out
+
+
+# =========================
+# DEDUP (important for production)
+# =========================
+def deduplicate(products):
+
+    seen = set()
+    unique = []
+
+    for p in products:
+        key = p.get("name", "").lower()
+
+        if key in seen:
+            continue
+
+        seen.add(key)
+        unique.append(p)
+
+    return unique
+
+
+# =========================
+# AGGREGATOR
+# =========================
+def get_all_products(cat_id, cat_name, user_prefs, offset=0):
+    # בונים חיפוש חכם לשיין ו-H&M שמתחיל בשם הקטגוריה (למשל: "Dresses maxi long sleeve")
+    base_query = build_smart_query(cat_name, user_prefs)
+    if cat_name.lower() not in base_query.lower():
+        query = f"{cat_name} {base_query}".strip()
+    else:
+        query = base_query
+
+    current_page = (offset // 48) + 1
+
+    # ASOS: חיפוש לפי ID של דף הקטגוריה (הכי מדויק)
+    asos = fetch_asos_products(cat_id, offset)
     
-    print("\n[System]: Analysis complete.")
+    # SHEIN & HM: חיפוש חופשי אבל ממוקד בקטגוריה
+    shein = fetch_shein_products(query, current_page)
+    hm = fetch_hm_products(query, current_page)
+
+    all_products = asos + shein + hm
+    all_products = deduplicate(all_products)
+
+    print(f"TOTAL: {len(all_products)} | ASOS: {len(asos)} | SHEIN: {len(shein)} | HM: {len(hm)}")
+    return all_products
+
+
+# =========================
+# ENTRY
+# =========================
+def main():
+    print("\n=== EasyStyle PRODUCTION BACKEND ===")
+
+    user = load_profile()
+
+    if not user:
+        print("No profile found.")
+    else:
+        print(f"Welcome back {user['name']}")
+
+    print("Run: streamlit run app.py")
+
 
 if __name__ == "__main__":
     main()
