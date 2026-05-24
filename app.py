@@ -3,6 +3,7 @@
 # =========================
 
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import json
 import urllib3
@@ -92,7 +93,22 @@ st.set_page_config(
     page_icon="👗",
     layout="wide"
 )
-
+# =========================
+# Google Analytics Setup
+# =========================
+ga_id = st.secrets.get("GA_MEASUREMENT_ID")
+if ga_id:
+    ga_code = f"""
+    <script async src="https://www.googletagmanager.com/gtag/js?id={ga_id}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{ga_id}');
+    </script>
+    """
+    
+    components.html(ga_code, height=0)
 st.title("👗 EasyStyle: Your Visual AI Stylist")
 
 
