@@ -145,7 +145,8 @@ with st.sidebar:
 
     u_name = st.text_input(
         "Name",
-        st.session_state.user_name
+        value="",
+        placeholder="Enter your name..."
     )
 
     gender_options = [
