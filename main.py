@@ -339,7 +339,7 @@ def main():
     user = load_profile()
 
     if not user:
-        print("No profile found.")
+        print("Sorry. No profile found.")
     else:
         print(f"Welcome back {user['name']}")
 
