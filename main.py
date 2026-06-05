@@ -334,7 +334,7 @@ def get_all_products(cat_id, cat_name, user_prefs, offset=0):
 # ENTRY
 # =========================
 def main():
-    print("\n=== EasyStyle PRODUCTION BACKEND ===")
+    print("\n=== SmartCart PRODUCTION BACKEND ===")
 
     user = load_profile()
 

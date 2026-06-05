@@ -89,7 +89,7 @@ def save_to_favorites(product):
 # Streamlit setup
 # =========================
 st.set_page_config(
-    page_title="EasyStyle AI",
+    page_title="SmartCart AI",
     page_icon="👗",
     layout="wide"
 )
@@ -109,7 +109,7 @@ if ga_id:
     """
     
     components.html(ga_code, height=0)
-st.title("👗 EasyStyle: Your Visual AI Stylist")
+st.title("👗 SmartCart: Your Visual AI Stylist")
 
 
 # =========================
