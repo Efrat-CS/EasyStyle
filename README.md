@@ -16,11 +16,23 @@ The project is being developed as an independent software engineering initiative
 - Product filtering and discovery workflows
 - Centralized fashion data management
 
+## Local Development
+
+Requires [uv](https://docs.astral.sh/uv/) and Python 3.10+.
+
+```bash
+uv sync
+uv run streamlit run app.py
+```
+
+The app opens at http://localhost:8501.
+
 ## Tech Stack
 
 ### Backend & Application
 - Python
 - Streamlit
+- uv
 
 ### Data Collection
 - Playwright *(currently in development)*

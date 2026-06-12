@@ -343,7 +343,7 @@ def main():
     else:
         print(f"Welcome back {user['name']}")
 
-    print("Run: streamlit run app.py to start the application.")
+    print("Run: uv run streamlit run app.py to start the application.")
 
 
 if __name__ == "__main__":

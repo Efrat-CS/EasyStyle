@@ -99,14 +99,14 @@ def is_favorited(product_id):
 
 
 def inject_card_styles():
-    st.markdown(
+    st.html(
         """
         <style>
         .product-card {
             background: #ffffff;
             border: 1px solid #ececec;
             border-bottom: none;
-            border-radius: 14px 14px 0 0;
+            border-radius: 12px 12px 0 0;
             overflow: hidden;
             margin-bottom: 0;
         }
@@ -119,6 +119,47 @@ def inject_card_styles():
             aspect-ratio: 3 / 4;
             object-fit: cover;
             display: block;
+        }
+        .product-card-open {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(20, 20, 20, 0.08);
+            background: rgba(255, 255, 255, 0.94);
+            color: #111111;
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.10);
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+            transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+        .product-card-media:hover .product-card-open,
+        .product-card-open:focus-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .product-card-open:hover {
+            border-color: rgba(20, 20, 20, 0.24);
+            background: #ffffff;
+            color: #111111;
+        }
+        .product-card-open::before {
+            content: "\\2197";
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        .product-card-open svg {
+            display: none;
         }
         .product-card-star {
             position: absolute;
@@ -133,7 +174,7 @@ def inject_card_styles():
             letter-spacing: 0.02em;
         }
         .product-card-body {
-            padding: 14px 14px 12px;
+            padding: 14px 14px 13px;
         }
         .product-card-name {
             margin: 0;
@@ -157,80 +198,60 @@ def inject_card_styles():
         }
         .product-card-price {
             margin: 0;
-            padding-top: 0.35rem;
+            padding-top: 0;
             font-size: 1rem;
             font-weight: 600;
             color: #111111;
-            letter-spacing: -0.01em;
-        }
-        .product-card-actions {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 8px;
-            flex-shrink: 0;
-        }
-        .product-card-action-slot {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 36px;
-        }
-        .product-card-action {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 1px solid #e4e4e4;
-            background: #ffffff;
-            color: #222222;
-            text-decoration: none;
-            transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
-        }
-        .product-card-action:hover {
-            border-color: #111111;
-            background: #fafafa;
-            color: #111111;
-        }
-        .product-card-action.saved {
-            border-color: #e8b4b8;
-            background: #fff5f6;
-            color: #c45c6a;
+            letter-spacing: 0;
         }
         div[data-testid="stVerticalBlock"] > div:has(.product-card) {
             gap: 0.4rem;
         }
-        div[data-testid="column"] .card-save-btn button {
-            width: 36px !important;
-            min-width: 36px !important;
-            height: 36px !important;
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button {
+            width: 42px !important;
+            min-width: 42px !important;
+            height: 42px !important;
             padding: 0 !important;
             border-radius: 50% !important;
             border: 1px solid #e4e4e4 !important;
             background: #ffffff !important;
             color: #222222 !important;
-            font-size: 1rem !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.14rem !important;
             line-height: 1 !important;
             box-shadow: none !important;
         }
-        div[data-testid="column"] .card-save-btn button:hover {
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button > div {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            line-height: 1 !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button p {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 0 1px !important;
+            line-height: 1 !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button:hover {
             border-color: #111111 !important;
             background: #fafafa !important;
             color: #c45c6a !important;
         }
-        div[data-testid="column"] .card-save-btn.saved button {
-            border-color: #e8b4b8 !important;
-            background: #fff5f6 !important;
-            color: #c45c6a !important;
-        }
         div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) {
             align-items: center;
-            padding: 10px 12px 12px;
+            padding: 12px 14px 14px;
             border: 1px solid #ececec;
             border-top: 1px solid #f2f2f2;
-            border-radius: 0 0 14px 14px;
+            border-radius: 0 0 12px 12px;
             margin-top: -1px;
             margin-bottom: 1.25rem;
             background: #ffffff;
@@ -241,8 +262,7 @@ def inject_card_styles():
             align-items: center;
         }
         </style>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -666,47 +686,36 @@ def render_product_card(m_info, idx, col, *, prefix="shop"):
         if img
         else '<div class="product-card-image"></div>'
     )
+    open_action_html = f"""
+        <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
+           class="product-card-open" title="Open on {safe_store}"
+           aria-label="Open on {safe_store}">
+            {ICON_EXTERNAL}
+        </a>
+    """
 
     with col:
-        st.markdown(
+        st.html(
             f"""
             <div class="product-card">
                 <div class="product-card-media">
                     {image_html}
                     {star_badge}
+                    {open_action_html}
                 </div>
                 <div class="product-card-body">
                     <p class="product-card-name">{safe_name}</p>
                     <p class="product-card-store">{safe_store}</p>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-        price_col, link_col, save_col = st.columns([5, 1, 1], gap="small")
+        price_col, save_col = st.columns([6, 1], gap="small")
         with price_col:
-            st.markdown(
-                f'<p class="product-card-price">{safe_price}</p>',
-                unsafe_allow_html=True,
-            )
-        with link_col:
-            st.markdown(
-                f"""
-                <div class="product-card-action-slot">
-                    <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
-                       class="product-card-action" title="Open on {safe_store}"
-                       aria-label="Open on {safe_store}">
-                        {ICON_EXTERNAL}
-                    </a>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.html(f'<p class="product-card-price">{safe_price}</p>')
         with save_col:
             save_label = "♥" if saved else "♡"
-            save_class = "card-save-btn saved" if saved else "card-save-btn"
-            st.markdown(f'<div class="{save_class}">', unsafe_allow_html=True)
             if st.button(
                 save_label,
                 key=f"save_{prefix}_{item['id']}_{idx}",
@@ -717,7 +726,6 @@ def render_product_card(m_info, idx, col, *, prefix="shop"):
                     st.toast("Saved to favorites")
                 else:
                     st.toast("Already in favorites")
-            st.markdown("</div>", unsafe_allow_html=True)
 
 
 def render_favorite_card(fv, idx, col):
@@ -733,42 +741,35 @@ def render_favorite_card(fv, idx, col):
         if img
         else '<div class="product-card-image"></div>'
     )
+    open_action_html = ""
+    if link:
+        open_action_html = f"""
+            <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
+               class="product-card-open" title="Open on {safe_store}"
+               aria-label="Open on {safe_store}">
+                {ICON_EXTERNAL}
+            </a>
+        """
 
     with col:
-        st.markdown(
+        st.html(
             f"""
             <div class="product-card">
                 <div class="product-card-media">
                     {image_html}
+                    {open_action_html}
                 </div>
                 <div class="product-card-body">
                     <p class="product-card-name">{safe_name}</p>
                     <p class="product-card-store">{safe_store}</p>
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
+            """
         )
 
-        price_col, link_col = st.columns([5, 1], gap="small")
+        price_col = st.columns([1], gap="small")[0]
         with price_col:
-            st.markdown(
-                f'<p class="product-card-price">{safe_price}</p>',
-                unsafe_allow_html=True,
-            )
-        with link_col:
-            st.markdown(
-                f"""
-                <div class="product-card-action-slot">
-                    <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
-                       class="product-card-action" title="Open on {safe_store}"
-                       aria-label="Open on {safe_store}">
-                        {ICON_EXTERNAL}
-                    </a>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+            st.html(f'<p class="product-card-price">{safe_price}</p>')
 
 
 # =========================
