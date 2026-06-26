@@ -1,7 +1,7 @@
 [project]
-name = "easystyle"
+name = "celune"
 version = "0.1.0"
-description = "SmartCart fashion discovery platform"
+description = "Célune fashion discovery platform"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

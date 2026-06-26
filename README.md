@@ -1,11 +1,11 @@
-# SmartCart - Fashion Discovery Platform
+# Célune - Fashion Discovery Platform
 
 ## Live Demo
-🚀 https://SmartCart.streamlit.app/
+🚀 https://celune.streamlit.app/
 
 ## Overview
 
-SmartCart is a full-stack fashion discovery platform that aggregates and organizes fashion catalog data from e-commerce sources into a centralized browsing experience.
+Célune is a full-stack fashion discovery platform that aggregates and organizes fashion catalog data from e-commerce sources into a centralized browsing experience.
 
 The project is being developed as an independent software engineering initiative, covering product design, application development, deployment, and future AI-powered recommendation capabilities.
 
