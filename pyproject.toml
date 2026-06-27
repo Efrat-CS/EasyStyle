@@ -12,3 +12,6 @@ dependencies = [
 
 [tool.uv]
 package = false
+dev-dependencies = [
+    "pytest",
+]
