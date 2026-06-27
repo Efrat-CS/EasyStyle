@@ -6,6 +6,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 import os
 import json
+import html
 import urllib3
 #from dotenv import load_dotenv
 
@@ -42,27 +43,8 @@ def save_to_favorites(product):
     if any(fav["id"] == product["id"] for fav in favorites):
         return False
 
-    raw_id = str(product["id"]).split("_")[-1]
-
     store = product.get("store", "ASOS").upper()
-
-    if store == "HM":
-
-        link = (
-            "https://www2.hm.com/en_us/"
-            f"search-results.html?q={product['name'].replace(' ', '+')}"
-        )
-
-    elif store == "SHEIN":
-
-        link = (
-            "https://www.shein.com/"
-            f"search?keyword={product['name'].replace(' ', '%20')}"
-        )
-
-    else:
-
-        link = f"https://www.asos.com/prd/{raw_id}"
+    link = get_product_link(product)
 
     favorites.append({
         "name": product["name"],
@@ -83,6 +65,215 @@ def save_to_favorites(product):
         )
 
     return True
+
+
+def get_product_link(item):
+    raw_id = str(item["id"]).split("_")[-1]
+    store = item.get("store", "ASOS").upper()
+
+    if store == "HM":
+        return (
+            "https://www2.hm.com/en_us/"
+            f"search-results.html?q={item['name'].replace(' ', '+')}"
+        )
+    if store == "SHEIN":
+        return (
+            "https://www.shein.com/"
+            f"search?keyword={item['name'].replace(' ', '%20')}"
+        )
+    return f"https://www.asos.com/prd/{raw_id}"
+
+
+def normalize_image_url(img):
+    if not img:
+        return ""
+    if img.startswith("//"):
+        return "https:" + img
+    if not img.startswith("http"):
+        return "https://" + img
+    return img
+
+
+def is_favorited(product_id):
+    return any(fav["id"] == product_id for fav in load_favorites())
+
+
+def inject_card_styles():
+    st.html(
+        """
+        <style>
+        .product-card {
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+        .product-card-media {
+            position: relative;
+            background: #f7f7f7;
+        }
+        .product-card-image {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            display: block;
+        }
+        .product-card-open {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(20, 20, 20, 0.08);
+            background: rgba(255, 255, 255, 0.94);
+            color: #111111;
+            text-decoration: none;
+            opacity: 0;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.10);
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+            transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.15s ease, background 0.15s ease;
+        }
+        .product-card-media:hover .product-card-open,
+        .product-card-open:focus-visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .product-card-open:hover {
+            border-color: rgba(20, 20, 20, 0.24);
+            background: #ffffff;
+            color: #111111;
+        }
+        .product-card-open::before {
+            content: "\\2197";
+            font-size: 1rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        .product-card-open svg {
+            display: none;
+        }
+        .product-card-star {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.92);
+            border-radius: 20px;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            letter-spacing: 0.02em;
+        }
+        .product-card-body {
+            padding: 14px 14px 13px;
+        }
+        .product-card-name {
+            margin: 0;
+            font-size: 0.88rem;
+            font-weight: 500;
+            line-height: 1.45;
+            color: #1a1a1a;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            min-height: 2.55rem;
+        }
+        .product-card-store {
+            margin: 6px 0 0;
+            font-size: 0.68rem;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #9a9a9a;
+        }
+        .product-card-price {
+            margin: 0;
+            padding-top: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #111111;
+            letter-spacing: 0;
+        }
+        div[data-testid="stVerticalBlock"] > div:has(.product-card) {
+            gap: 0.4rem;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button {
+            width: 42px !important;
+            min-width: 42px !important;
+            height: 42px !important;
+            padding: 0 !important;
+            border-radius: 50% !important;
+            border: 1px solid #e4e4e4 !important;
+            background: #ffffff !important;
+            color: #222222 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 1.14rem !important;
+            line-height: 1 !important;
+            box-shadow: none !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button > div {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            line-height: 1 !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button p {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 0 1px !important;
+            line-height: 1 !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) button:hover {
+            border-color: #111111 !important;
+            background: #fafafa !important;
+            color: #c45c6a !important;
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) {
+            align-items: center;
+            padding: 12px 14px 14px;
+            border: 1px solid #ececec;
+            border-top: 1px solid #f2f2f2;
+            border-radius: 0 0 12px 12px;
+            margin-top: -1px;
+            margin-bottom: 1.25rem;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+        div[data-testid="column"] div[data-testid="stHorizontalBlock"]:has(.product-card-price) > div {
+            display: flex;
+            align-items: center;
+        }
+        </style>
+        """
+    )
+
+
+ICON_EXTERNAL = (
+    '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" '
+    'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+    'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>'
+    '<polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>'
+    "</svg>"
+)
 
 
 # =========================
@@ -109,6 +300,8 @@ if ga_id:
     """
     
     components.html(ga_code, height=0)
+
+inject_card_styles()
 st.title("👗 SmartCart: Your Visual AI Stylist")
 
 
@@ -468,49 +661,115 @@ def filter_products(products, sel_cat):
 # =========================
 # Product card
 # =========================
-def render_product_card(m_info, idx, col):
+def render_product_card(m_info, idx, col, *, prefix="shop"):
     item = m_info["data"]
     store = item.get("store", "ASOS").upper()
+    img = normalize_image_url(item.get("imageUrl", ""))
+    link = get_product_link(item)
+    price_text = (
+        item.get("price", {})
+        .get("current", {})
+        .get("text", "N/A")
+    )
+    saved = is_favorited(item["id"])
+    safe_name = html.escape(item["name"])
+    safe_store = html.escape(store)
+    safe_price = html.escape(price_text)
+    safe_img = html.escape(img)
+    star_badge = (
+        '<span class="product-card-star">Recommended</span>'
+        if m_info.get("star")
+        else ""
+    )
+    image_html = (
+        f'<img src="{safe_img}" class="product-card-image" alt="{safe_name}">'
+        if img
+        else '<div class="product-card-image"></div>'
+    )
+    open_action_html = f"""
+        <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
+           class="product-card-open" title="Open on {safe_store}"
+           aria-label="Open on {safe_store}">
+            {ICON_EXTERNAL}
+        </a>
+    """
 
     with col:
-        img = item.get("imageUrl", "")
-        if img.startswith("//"):
-            img = "https:" + img
-        elif img and not img.startswith("http"):
-            img = "https://" + img
-
-        if img:
-            st.image(img, use_container_width=True)
-
-        star = "⭐ " if m_info["star"] else ""
-        st.markdown(f"**{star}{item['name']}**")
-        st.caption(f"📍 {store}")
-
-        price_text = (
-            item.get("price", {})
-            .get("current", {})
-            .get("text", "N/A")
+        st.html(
+            f"""
+            <div class="product-card">
+                <div class="product-card-media">
+                    {image_html}
+                    {star_badge}
+                    {open_action_html}
+                </div>
+                <div class="product-card-body">
+                    <p class="product-card-name">{safe_name}</p>
+                    <p class="product-card-store">{safe_store}</p>
+                </div>
+            </div>
+            """
         )
-        st.write(f"💰 {price_text}")
 
-        raw_id = str(item["id"]).split("_")[-1]
+        price_col, save_col = st.columns([6, 1], gap="small")
+        with price_col:
+            st.html(f'<p class="product-card-price">{safe_price}</p>')
+        with save_col:
+            save_label = "♥" if saved else "♡"
+            if st.button(
+                save_label,
+                key=f"save_{prefix}_{item['id']}_{idx}",
+                help="Save to favorites",
+                type="secondary",
+            ):
+                if save_to_favorites(item):
+                    st.toast("Saved to favorites")
+                else:
+                    st.toast("Already in favorites")
 
-        if store == "HM":
-            link = f"https://www2.hm.com/en_us/search-results.html?q={item['name'].replace(' ', '+')}"
-        elif store == "SHEIN":
-            link = f"https://www.shein.com/search?keyword={item['name'].replace(' ', '%20')}"
-        else:
-            link = f"https://www.asos.com/prd/{raw_id}"
 
-        st.link_button(f"🛍️ Buy on {store}", link)
+def render_favorite_card(fv, idx, col):
+    img = normalize_image_url(fv.get("imageUrl", ""))
+    store = fv.get("store", "ASOS").upper()
+    link = fv.get("link", "")
+    safe_name = html.escape(fv.get("name", ""))
+    safe_store = html.escape(store)
+    safe_price = html.escape(fv.get("price", "N/A"))
+    safe_img = html.escape(img)
+    image_html = (
+        f'<img src="{safe_img}" class="product-card-image" alt="{safe_name}">'
+        if img
+        else '<div class="product-card-image"></div>'
+    )
+    open_action_html = ""
+    if link:
+        open_action_html = f"""
+            <a href="{html.escape(link)}" target="_blank" rel="noopener noreferrer"
+               class="product-card-open" title="Open on {safe_store}"
+               aria-label="Open on {safe_store}">
+                {ICON_EXTERNAL}
+            </a>
+        """
 
-        if st.button("❤️ Save", key=f"save_{item['id']}_{idx}"):
-            if save_to_favorites(item):
-                st.toast("Saved!")
-            else:
-                st.toast("Already saved!")
+    with col:
+        st.html(
+            f"""
+            <div class="product-card">
+                <div class="product-card-media">
+                    {image_html}
+                    {open_action_html}
+                </div>
+                <div class="product-card-body">
+                    <p class="product-card-name">{safe_name}</p>
+                    <p class="product-card-store">{safe_store}</p>
+                </div>
+            </div>
+            """
+        )
 
-        st.divider()
+        price_col = st.columns([1], gap="small")[0]
+        with price_col:
+            st.html(f'<p class="product-card-price">{safe_price}</p>')
 
 
 # =========================
@@ -617,25 +876,4 @@ elif page == "My Favorites ❤️":
         cols = st.columns(3)
 
         for idx, fv in enumerate(favs):
-
-            with cols[idx % 3]:
-
-                if fv.get("imageUrl"):
-
-                    st.image(
-                        fv["imageUrl"],
-                        use_container_width=True
-                    )
-
-                st.markdown(f"**{fv['name']}**")
-
-                st.caption(f"📍 {fv.get('store', '')}")
-
-                st.write(f"💰 {fv['price']}")
-
-                st.link_button(
-                    "🛍️ View Product",
-                    fv["link"]
-                )
-
-                st.divider()
+            render_favorite_card(fv, idx, cols[idx % 3])
