@@ -1,7 +1,7 @@
 # Célune - Fashion Discovery Platform
 
 ## Live Demo
-🚀 https://celune.streamlit.app/
+🚀 [https://easystyle.streamlit.app/](https://easystyle.streamlit.app/)
 
 ## Overview
 
@@ -15,17 +15,6 @@ The project is being developed as an independent software engineering initiative
 - Fashion catalog browsing and organization
 - Product filtering and discovery workflows
 - Centralized fashion data management
-
-## Local Development
-
-Requires [uv](https://docs.astral.sh/uv/) and Python 3.10+.
-
-```bash
-uv sync
-uv run streamlit run app.py
-```
-
-The app opens at http://localhost:8501.
 
 ## Tech Stack
 
